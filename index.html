@@ -344,122 +344,41 @@
         </div>
     </div>
 
-    <script>
-        // GANTI INI DENGAN URL WEB APP GOOGLE SCRIPT ANDA SETELAH DEPLOY
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvnsWms0O0xkYs4swV9mceO6qpuWDnqkcnL9nu2NwV7N9SVY3QtcbcTl2URaKumnnr/exec";
+<form id="form">
+  <input name="nama" placeholder="Nama" required>
+  <input name="kelas" placeholder="Kelas" required>
+  <input name="buku" placeholder="Buku" required>
+  <button type="submit">Kirim</button>
+</form>
 
-        let currentMode = 'borrow';
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbzvnsWms0O0xkYs4swV9mceO6qpuWDnqkcnL9nu2NwV7N9SVY3QtcbcTl2URaKumnnr/exec";
 
-        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
+document.getElementById("form").addEventListener("submit", e => {
+  e.preventDefault();
 
-        function openForm(mode) {
-            currentMode = mode;
-            const landing = document.getElementById('landingPage');
-            const form = document.getElementById('formPage');
-            const header = document.getElementById('formHeader');
-            const btn = document.getElementById('submitBtn');
-            const title = document.getElementById('formTitle');
-            const type = document.getElementById('entryType');
+  const form = e.target;
 
-            if (mode === 'borrow') {
-                header.className = "p-10 bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white flex items-center justify-between relative overflow-hidden";
-                btn.className = "w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black py-6 rounded-[2.2rem] shadow-2xl shadow-blue-500/40 transition-all active:scale-95 flex items-center justify-center gap-4 mt-8 text-xl tracking-widest";
-                title.textContent = "Peminjaman Koleksi";
-                type.value = "Peminjaman";
-            } else {
-                header.className = "p-10 bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white flex items-center justify-between relative overflow-hidden";
-                btn.className = "w-full bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black py-6 rounded-[2.2rem] shadow-2xl shadow-emerald-500/40 transition-all active:scale-95 flex items-center justify-center gap-4 mt-8 text-xl tracking-widest";
-                title.textContent = "Pengembalian Koleksi";
-                type.value = "Pengembalian";
-            }
+  const data = {
+    nama: form.nama.value,
+    kelas: form.kelas.value,
+    buku: form.buku.value,
+    status: "Pinjam"
+  };
 
-            landing.style.opacity = '0';
-            landing.style.transform = 'scale(0.95) translateY(-20px)';
-            setTimeout(() => {
-                landing.classList.add('hidden');
-                form.classList.remove('hidden');
-            }, 400);
-        }
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Input success, please return the book after 10 work days");
+    form.reset();
+  })
+  .catch(err => alert("Error: " + err));
+});
+</script>
 
-        function backToLanding() {
-            const landing = document.getElementById('landingPage');
-            const form = document.getElementById('formPage');
-            form.style.opacity = '0';
-            form.style.transform = 'translateY(40px)';
-            setTimeout(() => {
-                form.classList.add('hidden');
-                form.style.opacity = '1';
-                form.style.transform = 'translateY(0)';
-                landing.classList.remove('hidden');
-                landing.style.opacity = '1';
-                landing.style.transform = 'scale(1) translateY(0)';
-            }, 400);
-        }
-
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            document.getElementById('loading').classList.remove('hidden');
-
-            const payload = {
-                entryType: document.getElementById('entryType').value,
-                studentName: document.getElementById('studentName').value,
-                studentClass: document.getElementById('studentClass').value,
-                bookTitle: document.getElementById('bookTitle').value
-            };
-
-            // Jika di lingkungan Google Apps Script (HTML Service)
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(() => showSuccess(payload))
-                    .withFailureHandler((err) => {
-                        document.getElementById('loading').classList.add('hidden');
-                        alert("Koneksi Database Terputus: " + err);
-                    })
-                    .processData(payload); // Pastikan ada fungsi processData di .gs
-            } else {
-                // Pengiriman via Fetch untuk Vercel / Hosting Biasa
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        cache: 'no-cache',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    showSuccess(payload);
-                } catch (err) {
-                    document.getElementById('loading').classList.add('hidden');
-                    alert("Terjadi kesalahan pengiriman data: " + err);
-                }
-            }
-        }
-
-        function showSuccess(payload) {
-            document.getElementById('loading').classList.add('hidden');
-            const icon = document.getElementById('successIcon');
-            const accent = document.getElementById('modalAccent');
-            let msg = "";
-
-            if (currentMode === 'borrow') {
-                icon.className = "w-32 h-32 bg-blue-50 text-blue-600 rounded-[3.2rem] flex items-center justify-center mx-auto mb-10 text-7xl shadow-xl shadow-blue-100";
-                accent.className = "absolute top-0 left-0 w-full h-5 bg-blue-600";
-                msg = `Halo <span class='text-slate-900 font-black'>${payload.studentName}</span>, peminjamanmu berhasil dicatat. Silakan kembalikan buku sebelum <span class='text-blue-600 font-black'>10 HARI KERJA</span>.`;
-            } else {
-                icon.className = "w-32 h-32 bg-emerald-50 text-emerald-600 rounded-[3.2rem] flex items-center justify-center mx-auto mb-10 text-7xl shadow-xl shadow-emerald-100";
-                accent.className = "absolute top-0 left-0 w-full h-5 bg-emerald-600";
-                msg = `Terima kasih <span class='text-slate-900 font-black'>${payload.studentName}</span>!<br>Pengembalian buku telah diverifikasi. Koleksi ini sekarang tersedia untuk dibaca orang lain.`;
-            }
-
-            document.getElementById('modalMsg').innerHTML = msg;
-            document.getElementById('successModal').classList.remove('hidden');
-            document.getElementById('libraryForm').reset();
-        }
-
-        function closeModal() {
-            document.getElementById('successModal').classList.add('hidden');
-            backToLanding();
-        }
-    </script>
 </body>
+
 </html>

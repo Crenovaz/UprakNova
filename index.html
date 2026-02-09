@@ -346,12 +346,12 @@
 
     <script>
         // GANTI INI DENGAN URL WEB APP GOOGLE SCRIPT ANDA SETELAH DEPLOY
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw04KTqxtMRMbzQPWG7ACtdX2M920t3FcMP05FFzlAgw2iTPjS2RGs63DMwmV7A2Lk/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAbmYhqdyNGP9OwaGNxrEMgigbtQPutdBjJwFbe6fGPWO9C4pq-BANM4ttsAMa4qPR/exec";
 
         let currentMode = 'borrow';
 
         const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('id-ID', dateOptions);
+        document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('id-ID', dateOptions).toUpperCase();
 
         function openForm(mode) {
             currentMode = mode;
@@ -379,6 +379,8 @@
             setTimeout(() => {
                 landing.classList.add('hidden');
                 form.classList.remove('hidden');
+                form.style.opacity = '1';
+                form.style.transform = 'translateY(0)';
             }, 400);
         }
 
@@ -399,6 +401,12 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
+            
+            if (SCRIPT_URL.includes("MASUKKAN_URL")) {
+                alert("Mohon masukkan URL Deployment Apps Script Anda di kode HTML.");
+                return;
+            }
+
             document.getElementById('loading').classList.remove('hidden');
 
             const payload = {
@@ -408,30 +416,24 @@
                 bookTitle: document.getElementById('bookTitle').value
             };
 
-            // Jika di lingkungan Google Apps Script (HTML Service)
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(() => showSuccess(payload))
-                    .withFailureHandler((err) => {
-                        document.getElementById('loading').classList.add('hidden');
-                        alert("Koneksi Database Terputus: " + err);
-                    })
-                    .processData(payload); // Pastikan ada fungsi processData di .gs
-            } else {
-                // Pengiriman via Fetch untuk Vercel / Hosting Biasa
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        cache: 'no-cache',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+            try {
+                // Pengiriman via Fetch dengan mode no-cors sesuai logika sebelumnya
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                // Beri sedikit jeda simulasi proses sebelum menampilkan modal sukses
+                setTimeout(() => {
                     showSuccess(payload);
-                } catch (err) {
-                    document.getElementById('loading').classList.add('hidden');
-                    alert("Terjadi kesalahan pengiriman data: " + err);
-                }
+                }, 1000);
+
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden');
+                alert("Terjadi kesalahan pengiriman data: " + err);
             }
         }
 
@@ -448,7 +450,7 @@
             } else {
                 icon.className = "w-32 h-32 bg-emerald-50 text-emerald-600 rounded-[3.2rem] flex items-center justify-center mx-auto mb-10 text-7xl shadow-xl shadow-emerald-100";
                 accent.className = "absolute top-0 left-0 w-full h-5 bg-emerald-600";
-                msg = `Terima kasih <span class='text-slate-900 font-black'>${payload.studentName}</span>!<br>Pengembalian buku telah diverifikasi. Koleksi ini sekarang tersedia untuk dibaca orang lain.`;
+                msg = `Terima kasih <span class='text-slate-900 font-black'>${payload.studentName}</span>!<br>Pengembalian buku telah diverifikasi.`;
             }
 
             document.getElementById('modalMsg').innerHTML = msg;
@@ -463,5 +465,3 @@
     </script>
 </body>
 </html>
-
-
